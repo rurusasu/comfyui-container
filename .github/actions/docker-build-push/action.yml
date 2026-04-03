@@ -18,17 +18,27 @@ inputs:
     description: "Docker Hub image name"
     required: false
     default: "rurusasu/comfyui-container"
+  push:
+    description: "Push to registry (true/false)"
+    required: false
+    default: "false"
+
+outputs:
+  image_tag:
+    description: "Full image tag that was built"
+    value: ${{ steps.meta.outputs.image_tag }}
 
 runs:
   using: composite
   steps:
-    - name: Resolve version number
-      id: version
+    - name: Resolve tag
+      id: meta
       shell: bash
       run: |
         VERSION_NUM="${{ inputs.comfyui_version }}"
         VERSION_NUM="${VERSION_NUM#v}"
-        echo "version_num=${VERSION_NUM}" >> "$GITHUB_OUTPUT"
+        TAG="${{ inputs.image_name }}:comfyui-${VERSION_NUM}-base-${{ inputs.variant }}"
+        echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
 
     - uses: docker/setup-buildx-action@v3
 
@@ -40,11 +50,10 @@ runs:
     - uses: docker/build-push-action@v6
       with:
         context: .
-        push: true
+        push: ${{ inputs.push }}
         build-args: |
           VARIANT=${{ inputs.variant }}
           COMFYUI_VERSION=${{ inputs.comfyui_version }}
-        tags: |
-          ${{ inputs.image_name }}:comfyui-${{ steps.version.outputs.version_num }}-base-${{ inputs.variant }}
+        tags: ${{ steps.meta.outputs.image_tag }}
         cache-from: type=gha,scope=${{ inputs.variant }}
         cache-to: type=gha,mode=max,scope=${{ inputs.variant }}
