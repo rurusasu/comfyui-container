@@ -12,7 +12,16 @@ on:
         default: "v0.18.3"
 
 jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
   build:
+    needs: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,12 +36,18 @@ jobs:
           fi
 
       - uses: ./.github/actions/docker-build-push
+        id: docker
         with:
           variant: cpu
           comfyui_version: ${{ steps.version.outputs.comfyui_version }}
           dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
-          push: "false"
+          load: "true"
+
+      - name: Smoke test
+        run: |
+          docker run --rm ${{ steps.docker.outputs.image_tag }} \
+            python -c "import torch; import comfy; print(f'torch={torch.__version__} comfy=ok')"
 
   push:
     needs: build

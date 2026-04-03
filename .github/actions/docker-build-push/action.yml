@@ -22,6 +22,10 @@ inputs:
     description: "Push to registry (true/false)"
     required: false
     default: "false"
+  load:
+    description: "Load image into local docker (true/false)"
+    required: false
+    default: "false"
 
 outputs:
   image_tag:
@@ -51,6 +55,7 @@ runs:
       with:
         context: .
         push: ${{ inputs.push }}
+        load: ${{ inputs.load }}
         build-args: |
           VARIANT=${{ inputs.variant }}
           COMFYUI_VERSION=${{ inputs.comfyui_version }}
