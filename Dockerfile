@@ -10,13 +10,14 @@
 ARG VARIANT=gpu
 ARG COMFYUI_VERSION=v0.18.3
 ARG PYTORCH_GPU_IMAGE=pytorch/pytorch:2.11.0-cuda13.0-cudnn9-runtime
-ARG PYTORCH_CPU_IMAGE=pytorch/pytorch:2.11.0-cpu
+ARG PYTORCH_CPU_IMAGE=python:3.12-slim
 
 # ── Stage 1: builder ─────────────────────────────────────────
 FROM ${PYTORCH_GPU_IMAGE} AS builder-gpu
 FROM ${PYTORCH_CPU_IMAGE} AS builder-cpu
 FROM builder-${VARIANT} AS builder
 
+ARG VARIANT
 ARG COMFYUI_VERSION
 
 RUN apt-get update && \
@@ -26,8 +27,16 @@ RUN apt-get update && \
 RUN git clone --depth 1 --branch ${COMFYUI_VERSION} \
     https://github.com/comfy-org/ComfyUI.git /app
 
-# Install into a venv to avoid clobbering base image's conda packages
+# Install into a venv so dependencies are self-contained
 RUN python -m venv /opt/comfyui-env && \
+    /opt/comfyui-env/bin/pip install --no-cache-dir --upgrade pip
+
+# CPU: install PyTorch from CPU-only wheel index
+# GPU: PyTorch is already in the base image, just install ComfyUI deps
+RUN if [ "$VARIANT" = "cpu" ]; then \
+      /opt/comfyui-env/bin/pip install --no-cache-dir \
+        torch torchvision --index-url https://download.pytorch.org/whl/cpu; \
+    fi && \
     /opt/comfyui-env/bin/pip install --no-cache-dir -r /app/requirements.txt && \
     /opt/comfyui-env/bin/pip install --no-cache-dir -r /app/manager_requirements.txt
 
