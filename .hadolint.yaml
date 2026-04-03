@@ -1,0 +1,5 @@
+ignored:
+  # Base images are parameterized via ARG for GPU/CPU switching
+  - DL3006
+  # apt packages are not version-pinned; base image controls versions
+  - DL3008
