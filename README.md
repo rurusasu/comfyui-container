@@ -1,10 +1,32 @@
 # comfyui-container
 
-[![Build and Push](https://github.com/rurusasu/comfyui-container/actions/workflows/build-push.yml/badge.svg)](https://github.com/rurusasu/comfyui-container/actions/workflows/build-push.yml)
+[![Build GPU](https://github.com/rurusasu/comfyui-container/actions/workflows/build-gpu.yml/badge.svg)](https://github.com/rurusasu/comfyui-container/actions/workflows/build-gpu.yml)
+[![Build CPU](https://github.com/rurusasu/comfyui-container/actions/workflows/build-cpu.yml/badge.svg)](https://github.com/rurusasu/comfyui-container/actions/workflows/build-cpu.yml)
 [![Docker Hub](https://img.shields.io/docker/pulls/rurusasu/comfyui-container)](https://hub.docker.com/r/rurusasu/comfyui-container)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Production-ready [ComfyUI](https://github.com/comfy-org/ComfyUI) Docker image with **ComfyUI-Manager** pre-installed. GPU and CPU variants available.
+
+---
+
+## CI Pipeline
+
+Each variant (GPU / CPU) runs an independent 3-phase pipeline:
+
+| Phase | Check | Tool | Description |
+|-------|-------|------|-------------|
+| **CI** | Dockerfile lint | [hadolint](https://github.com/hadolint/hadolint) | Static analysis for Dockerfile best practices |
+| **Build** | Docker build | [Buildx](https://github.com/docker/buildx) | Multi-stage image build with layer caching |
+| **Build** | Smoke test | `python -c "import torch; import comfy"` | Verify PyTorch and ComfyUI load correctly |
+| **Push** | Publish | [Docker Hub](https://hub.docker.com/r/rurusasu/comfyui-container) | Push image only after all checks pass |
+
+```
+ci → build → push
+│      │       │
+│      │       └─ Docker Hub publish
+│      └─ docker build + smoke test
+└─ hadolint
+```
 
 ---
 
