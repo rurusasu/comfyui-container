@@ -10,7 +10,7 @@
 ARG VARIANT=gpu
 ARG COMFYUI_VERSION=v0.18.3
 ARG PYTORCH_GPU_IMAGE=pytorch/pytorch:2.11.0-cuda13.0-cudnn9-runtime
-ARG PYTORCH_CPU_IMAGE=python:3.12-slim
+ARG PYTORCH_CPU_IMAGE=python:3.13-slim
 
 # ── Stage 1: builder ─────────────────────────────────────────
 FROM ${PYTORCH_GPU_IMAGE} AS builder-gpu
