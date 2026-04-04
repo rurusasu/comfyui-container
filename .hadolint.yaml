@@ -3,3 +3,5 @@ ignored:
   - DL3006
   # apt packages are not version-pinned; base image controls versions
   - DL3008
+  # Consecutive RUN instructions are intentional for Docker layer caching
+  - DL3059
