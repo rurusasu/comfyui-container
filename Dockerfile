@@ -38,7 +38,8 @@ RUN if [ "$VARIANT" = "cpu" ]; then \
         torch torchvision --index-url https://download.pytorch.org/whl/cpu; \
     fi && \
     /opt/comfyui-env/bin/pip install --no-cache-dir -r /app/requirements.txt && \
-    /opt/comfyui-env/bin/pip install --no-cache-dir -r /app/manager_requirements.txt
+    /opt/comfyui-env/bin/pip install --no-cache-dir -r /app/manager_requirements.txt && \
+    find /opt/comfyui-env -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null; true
 
 # ── Stage 2: runtime ─────────────────────────────────────────
 FROM ${PYTORCH_GPU_IMAGE} AS runtime-gpu
@@ -61,7 +62,7 @@ COPY --from=builder /app /app
 
 ENV PATH="/opt/comfyui-env/bin:$PATH"
 
-# ── Model directories ────────────────────────────────────────
+# ── Model directories & non-root user ────────────────────────
 RUN mkdir -p /app/models/text_encoders \
              /app/models/diffusion_models \
              /app/models/vae \
@@ -76,14 +77,9 @@ RUN mkdir -p /app/models/text_encoders \
              /app/models/ultralytics/bbox \
              /app/models/sams \
              /app/models/llm/GGUF \
-             /app/models/LLM
-
-# Backup custom_nodes for volume seeding
-# (entrypoint can copy to empty volume on first run)
-RUN cp -r /app/custom_nodes /app/custom_nodes_default
-
-# Run as non-root for security
-RUN useradd -m -s /bin/bash comfyui && \
+             /app/models/LLM && \
+    cp -r /app/custom_nodes /app/custom_nodes_default && \
+    useradd -m -s /bin/bash comfyui && \
     chown -R comfyui:comfyui /app /opt/comfyui-env
 USER comfyui
 
