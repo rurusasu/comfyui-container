@@ -78,14 +78,13 @@ RUN mkdir -p /app/models/text_encoders \
              /app/models/llm/GGUF \
              /app/models/LLM
 
-# Backup custom_nodes and venv for volume seeding
+# Backup custom_nodes for volume seeding
 # (entrypoint can copy to empty volume on first run)
-RUN cp -r /app/custom_nodes /app/custom_nodes_default && \
-    cp -r /opt/comfyui-env /opt/comfyui-env-default
+RUN cp -r /app/custom_nodes /app/custom_nodes_default
 
 # Run as non-root for security
 RUN useradd -m -s /bin/bash comfyui && \
-    chown -R comfyui:comfyui /app /opt/comfyui-env /opt/comfyui-env-default
+    chown -R comfyui:comfyui /app /opt/comfyui-env
 USER comfyui
 
 WORKDIR /app
