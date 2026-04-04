@@ -1,4 +1,9 @@
 .git
 .github
+.hadolint.yaml
+.dockerignore
 README.md
 LICENSE
+CLAUDE.md
+*.md
+docs/
