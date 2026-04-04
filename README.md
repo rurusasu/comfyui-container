@@ -2,6 +2,8 @@
 
 [![Build GPU](https://github.com/rurusasu/comfyui-container/actions/workflows/build-gpu.yml/badge.svg)](https://github.com/rurusasu/comfyui-container/actions/workflows/build-gpu.yml)
 [![Build CPU](https://github.com/rurusasu/comfyui-container/actions/workflows/build-cpu.yml/badge.svg)](https://github.com/rurusasu/comfyui-container/actions/workflows/build-cpu.yml)
+[![Lint](https://github.com/rurusasu/comfyui-container/actions/workflows/lint.yml/badge.svg)](https://github.com/rurusasu/comfyui-container/actions/workflows/lint.yml)
+[![Security Scan](https://github.com/rurusasu/comfyui-container/actions/workflows/security.yml/badge.svg)](https://github.com/rurusasu/comfyui-container/actions/workflows/security.yml)
 [![Docker Hub](https://img.shields.io/docker/pulls/rurusasu/comfyui-container)](https://hub.docker.com/r/rurusasu/comfyui-container)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -15,17 +17,31 @@ Each variant (GPU / CPU) runs an independent 3-phase pipeline:
 
 | Phase | Check | Tool | Description |
 |-------|-------|------|-------------|
-| **CI** | Dockerfile lint | [hadolint](https://github.com/hadolint/hadolint) | Static analysis for Dockerfile best practices |
 | **Build** | Docker build | [Buildx](https://github.com/docker/buildx) | Multi-stage image build with layer caching |
 | **Build** | Smoke test | `python -c "import torch; import comfy"` | Verify PyTorch and ComfyUI load correctly |
+| **Test** | Security scan | [Trivy](https://github.com/aquasecurity/trivy) | Container image vulnerability scan (CRITICAL/HIGH) |
 | **Push** | Publish | [Docker Hub](https://hub.docker.com/r/rurusasu/comfyui-container) | Push image only after all checks pass |
 
+Standalone workflows (run on every PR and push to main):
+
+| Workflow | Tool | Description |
+|----------|------|-------------|
+| **Lint** | [hadolint](https://github.com/hadolint/hadolint) | Dockerfile static analysis |
+| **Security** | [Trivy](https://github.com/aquasecurity/trivy) | Config + filesystem scan with SARIF upload to GitHub Security tab |
+
 ```
-ci → build → push
-│      │       │
-│      │       └─ Docker Hub publish
-│      └─ docker build + smoke test
-└─ hadolint
+build → test → push
+  │       │       │
+  │       │       └─ Docker Hub publish
+  │       └─ Trivy image scan
+  └─ docker build + smoke test
+
+lint (on PR / push to main)
+  └─ hadolint
+
+security (on PR / push to main / weekly)
+  ├─ Trivy config scan → GitHub Security tab
+  └─ Trivy filesystem scan → GitHub Security tab
 ```
 
 ---
@@ -204,6 +220,8 @@ docker build --build-arg VARIANT=gpu --build-arg COMFYUI_VERSION=v0.18.3 \
 
 - Runs as non-root user (`comfyui`, UID 1000)
 - ComfyUI version pinned to specific git tag
+- [Trivy](https://github.com/aquasecurity/trivy) scans on every build (image) and PR (config + filesystem)
+- Scan results uploaded to [GitHub Security tab](https://github.com/rurusasu/comfyui-container/security)
 - ComfyUI-Manager is enabled by default, allowing runtime node installation via web UI. This is an accepted trade-off for usability. Disable with custom CMD if needed.
 
 ---
