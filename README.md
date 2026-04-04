@@ -34,8 +34,8 @@ ci → build → push
 
 | Tag | Base | CUDA | Size |
 |---|---|---|---|
-| `comfyui-0.18.3-base-gpu` | PyTorch 2.11.0 | 13.0 + cuDNN 9 | ~8 GB |
-| `comfyui-0.18.3-base-cpu` | PyTorch 2.11.0 | - | ~4 GB |
+| `comfyui-0.18.3-base-gpu` | PyTorch 2.11.0 | 13.0 + cuDNN 9 | ![Size](https://img.shields.io/docker/image-size/rurusasu/comfyui-container/comfyui-0.18.3-base-gpu) |
+| `comfyui-0.18.3-base-cpu` | Python 3.12 + PyTorch (CPU) | - | ![Size](https://img.shields.io/docker/image-size/rurusasu/comfyui-container/comfyui-0.18.3-base-cpu) |
 
 ### Tag Convention
 
