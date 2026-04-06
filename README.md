@@ -67,29 +67,37 @@ comfyui-{version}-{variant}-{platform}
 
 ## Quick Start
 
-### GPU (NVIDIA)
+### Docker Compose (recommended)
+
+```bash
+docker compose -f docker/docker-compose.yaml up --build
+```
+
+Open **http://localhost:8188** in your browser.
+
+### docker run (GPU)
 
 ```bash
 docker run -d --gpus all \
   -p 8188:8188 \
-  -v $(pwd)/models:/app/models \
-  -v comfyui-data:/app/custom_nodes \
+  -v $(pwd)/docker/data/models:/app/models \
+  -v $(pwd)/docker/data/output:/app/output \
+  -v $(pwd)/docker/data/custom_nodes:/app/custom_nodes \
   --name comfyui \
   rurusasu/comfyui-container:comfyui-0.18.3-base-gpu
 ```
 
-### CPU
+### docker run (CPU)
 
 ```bash
 docker run -d \
   -p 8188:8188 \
-  -v $(pwd)/models:/app/models \
-  -v comfyui-data:/app/custom_nodes \
+  -v $(pwd)/docker/data/models:/app/models \
+  -v $(pwd)/docker/data/output:/app/output \
+  -v $(pwd)/docker/data/custom_nodes:/app/custom_nodes \
   --name comfyui \
   rurusasu/comfyui-container:comfyui-0.18.3-base-cpu
 ```
-
-Open **http://localhost:8188** in your browser.
 
 ---
 
@@ -110,10 +118,14 @@ Open **http://localhost:8188** in your browser.
 
 | Container Path | Purpose | Recommended |
 |---|---|---|
-| `/app/models` | Model files (checkpoints, LoRA, VAE, etc.) | Bind mount to host |
-| `/app/custom_nodes` | Custom nodes installed via Manager | Named volume |
-| `/app/output` | Generated images | Bind mount to host |
-| `/app/input` | Input images for workflows | Bind mount to host |
+| Container Path | Host Path (`docker/data/`) | Purpose |
+|---|---|---|
+| `/app/models` | `models/` | Model files (checkpoints, LoRA, VAE, etc.) |
+| `/app/custom_nodes` | `custom_nodes/` | Custom nodes installed via Manager |
+| `/app/output` | `output/` | Generated images |
+| `/app/input` | `input/` | Input images for workflows |
+| `/app/user` | `user/` | User settings and preferences |
+| `/app/user/default/workflows` | `workflows/` | Saved workflows |
 
 ### Model Directory Structure
 
@@ -138,44 +150,59 @@ models/
 
 ---
 
-## Docker Compose
+## Directory Structure
 
-```yaml
-services:
-  comfyui:
-    image: rurusasu/comfyui-container:comfyui-0.18.3-base-gpu
-    ports:
-      - "8188:8188"
-    volumes:
-      - ./models:/app/models
-      - ./output:/app/output
-      - comfyui-nodes:/app/custom_nodes
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    restart: unless-stopped
-
-volumes:
-  comfyui-nodes:
 ```
+docker/
+├── Dockerfile                  # Multi-stage build definition
+├── docker-compose.yaml         # Docker Compose service definition
+├── config/
+│   ├── config.ini              # ComfyUI-Manager settings
+│   └── extra_model_paths.yaml  # Model path configuration
+└── data/                       # Persistent data (git-ignored except .gitkeep)
+    ├── models/                 # Model files
+    ├── custom_nodes/           # Installed custom nodes
+    ├── output/                 # Generated images
+    ├── input/                  # Input images
+    ├── user/                   # User settings
+    └── workflows/              # Saved workflows
+```
+
+## Configuration
+
+### ComfyUI-Manager (`docker/config/config.ini`)
+
+ComfyUI-Manager の設定ファイル。コンテナ内の `/app/user/__manager/config.ini` にマウントされます。
+
+主な設定変更:
+
+| Setting | Default | Current | Reason |
+|---|---|---|---|
+| `network_mode` | `public` | `personal_cloud` | `public` モードでは Manager からの拡張機能インストールがブロックされるため変更 |
+| `security_level` | `normal` | `normal` | 拡張機能のインストール・管理を許可 |
+
+> **Note**: `network_mode` が `public` の場合、ComfyUI-Manager のインストール/アンインストール操作が `security_level` の制約によりブロックされます。Docker Desktop でローカル利用する場合は `personal_cloud` に設定してください。
+
+### Model Paths (`docker/config/extra_model_paths.yaml`)
+
+ComfyUI のモデル検索パスを定義します。コンテナ内の `/app/extra_model_paths.yaml` に読み取り専用でマウントされます。
 
 ---
 
 ## Build Locally
 
 ```bash
-# GPU
-docker build --build-arg VARIANT=gpu -t comfyui:base-gpu .
+# GPU (docker compose)
+docker compose -f docker/docker-compose.yaml up --build
+
+# GPU (docker build)
+docker build -f docker/Dockerfile --build-arg VARIANT=gpu -t comfyui:base-gpu .
 
 # CPU
-docker build --build-arg VARIANT=cpu -t comfyui:base-cpu .
+docker build -f docker/Dockerfile --build-arg VARIANT=cpu -t comfyui:base-cpu .
 
 # Specific ComfyUI version
-docker build --build-arg VARIANT=gpu --build-arg COMFYUI_VERSION=v0.18.3 \
+docker build -f docker/Dockerfile --build-arg VARIANT=gpu --build-arg COMFYUI_VERSION=v0.18.3 \
   -t comfyui:base-gpu .
 ```
 
