@@ -83,11 +83,19 @@ build → test → push
 
 ### Lint (`lint.yml`)
 
-トリガー: PR / push to main → hadolint
+トリガー: PR / push to main
+
+```
+hadolint → trivy-config + trivy-fs (並列)
+```
+
+- hadolint: Dockerfile 静的解析
+- trivy config: Dockerfile / IaC の設定ミス検出 (CRITICAL/HIGH)
+- trivy fs: 依存関係の脆弱性スキャン (CRITICAL/HIGH)
 
 ### Security (`security.yml`)
 
-トリガー: PR / push to main / 毎週月曜 09:00 UTC → Trivy config + fs スキャン → GitHub Security tab (SARIF)
+トリガー: 毎週月曜 09:00 UTC → Trivy config + fs スキャン → GitHub Security tab (SARIF)
 
 ## コーディング規約
 

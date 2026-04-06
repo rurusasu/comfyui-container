@@ -1,10 +1,6 @@
 name: Security Scan
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   schedule:
     # Run weekly on Monday at 09:00 UTC
     - cron: "0 9 * * 1"
@@ -14,7 +10,7 @@ permissions:
   security-events: write
 
 jobs:
-  trivy-dockerfile:
+  trivy-config:
     name: Trivy Config Scan
     runs-on: ubuntu-latest
     steps:
