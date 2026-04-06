@@ -7,3 +7,4 @@ LICENSE
 CLAUDE.md
 *.md
 docs/
+docker/data/
