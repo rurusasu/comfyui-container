@@ -54,6 +54,7 @@ runs:
     - uses: docker/build-push-action@v7
       with:
         context: .
+        file: docker/Dockerfile
         push: ${{ inputs.push }}
         load: ${{ inputs.load }}
         build-args: |

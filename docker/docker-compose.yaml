@@ -1,0 +1,29 @@
+services:
+  comfyui:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        VARIANT: gpu
+    image: comfyui:base-gpu
+    environment:
+      - COMFYUI_MODEL_PATH=/app/models
+    ports:
+      - "8188:8188"
+    volumes:
+      - ./data/models:/app/models
+      - ./data/output:/app/output
+      - ./data/custom_nodes:/app/custom_nodes
+      - ./data/input:/app/input
+      - ./data/user:/app/user
+      - ./data/workflows:/app/user/default/workflows
+      - ./config/extra_model_paths.yaml:/app/extra_model_paths.yaml:ro
+      - ./config/config.ini:/app/user/__manager/config.ini
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
